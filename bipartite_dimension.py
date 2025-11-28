@@ -45,10 +45,8 @@ def edges_to_literals(edges): # convert adjacency matrix to edge literals list
     return edgelit
 
 def encode(graph, maximum_iterations):
-    if maximum_iterations <1 : 
-        maximum_iterations = float('inf')
-        
-    for k in range(1, maximum_iterations + 1):
+    k=0
+    while(k< maximum_iterations or maximum_iterations <1):
         cnf = [] # list of clauses
 
         nr_vars = 0
@@ -62,7 +60,7 @@ def encode(graph, maximum_iterations):
                 cnf.append([lit,0])  # edge must be present
             else:
                 cnf.append([-lit,0])  # edge must be absent
-        # Add edges present in biclique
+        # Add literals for edges present in biclique
         biclique_edges = []
         for i in range(k):
             biclique_edges.append(graph.edgeliterals)
@@ -71,16 +69,23 @@ def encode(graph, maximum_iterations):
             is_edge, u, v = graph.edgeliterals[i]
             if is_edge:
                 clause = []
-                for b in range(k):
+                for b in range(1,k+1):
                     biclique_edge_lit = graph.get_biclique_edge_id(b, u, v)
                     clause.append(biclique_edge_lit)
                 clause.append(0)
                 cnf.append(clause)
 
+        # if edge does not exist in graph it must not exist in any biclique?
+        for i in range(len(graph.edgeliterals)):
+            is_edge, u, v = graph.edgeliterals[i]
+            if not is_edge:
+                for b in range(1,k+1):
+                    biclique_edge_lit = graph.get_biclique_edge_id(b, u, v)
+                    cnf.append([-biclique_edge_lit, 0])
+        # setup a vertices in biclique And B
+        
 
-
-
-
+        k += 1
     # Encoding logic goes here
 
     return cnf, nr_vars
