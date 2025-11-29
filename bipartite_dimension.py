@@ -7,21 +7,25 @@ class Graph:
     def __init__(self, vertices, edges, edgeliterals):
         self.vertices = vertices
         self.edges = edges
-        self.edgeliterals = edgeliterals
+        self.edgeliterals = edgeliterals # mapping of edge id to list
         #self.verticesliterals = len(vertices)
         self.numberofedgeliterals = len(vertices)*(len(vertices)-1)//2 # to avoid unnecessary literals we have complete graph number of edges
         #self.edgeliterals = len(vertices)*len(vertices)
 
-    #def get_vertice(self,n): # we dont need vertice literals
-    #    return n + 1
-    def get_edge_id(self, u, v):
+
+    def get_edge_id(self, u, v, lits_before=0):
         if u > v:
             u, v = v, u
-        return (u - 1) * (len(self.vertices) - u // 2) + (v - u) - 1
-    def get_biclique_edge_id(self, k, u, v):
+        return (u - 1) * (len(self.vertices) - u // 2) + (v - u) - 1 + lits_before
+    def get_biclique_edge_id(self, b, u, v, lits_before=0):
         edge_id = self.get_edge_id(u, v)
-        return k * self.numberofedgeliterals + edge_id + 1
+        return (b-1) * self.numberofedgeliterals + edge_id + 1 + lits_before
+    def get_Abiclique_vertice_id(self, b, v, lits_before=0):
+        return (b-1) * len(self.vertices) + v + lits_before + 1
+    def get_Bbiclique_vertice_id(self, b, v, lits_before=0):
+        return (b-1) * len(self.vertices) + v  + lits_before + 1
 
+    
     
 def load_graph(file_path):
     edgelist = []
@@ -44,23 +48,16 @@ def edges_to_literals(edges): # convert adjacency matrix to edge literals list
             edgelit.append((edges[i][j],i+1,j+1)) # store as (is_edge, u, v)
     return edgelit
 
+
 def encode(graph, maximum_iterations):
-    k=0
-    while(k< maximum_iterations or maximum_iterations <1):
+    k=1
+    while(k< maximum_iterations or maximum_iterations ==0):
         cnf = [] # list of clauses
 
         nr_vars = 0
-        #setup edge literals
-        nr_vars += graph.numberofedgeliterals
-        # setup intial egde literals
-        for i in range(len(graph.edgeliterals)):
-            is_edge, u, v = graph.edgeliterals[i]
-            lit = i + 1
-            if is_edge:
-                cnf.append([lit,0])  # edge must be present
-            else:
-                cnf.append([-lit,0])  # edge must be absent
-        # Add literals for edges present in biclique
+        literalsbeforeedges= nr_vars
+
+        # Add literals for edges present in k-biclique
         biclique_edges = []
         for i in range(k):
             biclique_edges.append(graph.edgeliterals)
@@ -70,7 +67,7 @@ def encode(graph, maximum_iterations):
             if is_edge:
                 clause = []
                 for b in range(1,k+1):
-                    biclique_edge_lit = graph.get_biclique_edge_id(b, u, v)
+                    biclique_edge_lit = graph.get_biclique_edge_id(b, u, v,nr_vars)
                     clause.append(biclique_edge_lit)
                 clause.append(0)
                 cnf.append(clause)
@@ -82,11 +79,59 @@ def encode(graph, maximum_iterations):
                 for b in range(1,k+1):
                     biclique_edge_lit = graph.get_biclique_edge_id(b, u, v)
                     cnf.append([-biclique_edge_lit, 0])
-        # setup a vertices in biclique And B
+        nr_vars += k * graph.numberofedgeliterals
+        literalsbefore_A= nr_vars
+
+
+        # setup a vertices in biclique A and B
+        vertices_in_biclique_A = []
+        vertices_in_biclique_B = []
+        for i in range(k):
+            A = []
+            for v in graph.vertices:
+                A.append((graph.get_Abiclique_vertice_id(i+1, v,nr_vars),v+1))
+            vertices_in_biclique_A.append(A)
+        nr_vars +=  k * len(graph.vertices)
+        literalsbefore_B= nr_vars
+        for i in range(k):
+            B = []
+            for v in graph.vertices:
+                B.append((graph.get_Bbiclique_vertice_id(i+1, v,nr_vars),v+1)) 
+            vertices_in_biclique_B.append(B)     
+        nr_vars +=  k * len(graph.vertices)
+
+        # if an edge is present in a biclique k, then u in A_k and v in B_k or v in A_k and u in B_k , NOT both
+
+        for i in range(len(graph.edgeliterals)):
+            _, u, v = graph.edgeliterals[i]
+            for b in range(1,k+1):
+                biclique_edge_lit = graph.get_biclique_edge_id(b, u, v,literalsbeforeedges)
+                A_u_lit = graph.get_Abiclique_vertice_id(b, u,literalsbefore_A)
+                B_v_lit = graph.get_Bbiclique_vertice_id(b, v,literalsbefore_B)
+                A_v_lit = graph.get_Abiclique_vertice_id(b, v,literalsbefore_A)
+                B_u_lit = graph.get_Bbiclique_vertice_id(b, u,literalsbefore_B)
+
+                cnf.append([-biclique_edge_lit, A_u_lit, B_u_lit, 0])
+                cnf.append([-biclique_edge_lit, A_u_lit, A_v_lit, 0])
+                cnf.append([-biclique_edge_lit, B_u_lit, B_v_lit, 0])
+                cnf.append([-biclique_edge_lit, B_v_lit, A_v_lit, 0])
+                cnf.append([-biclique_edge_lit, -A_u_lit, -B_u_lit,-A_v_lit, -B_v_lit, 0])
+
+        # if a vertice is in A_k then all other 
+        for u in graph.vertices:
+            for b in range(1,k+1):
+                A_u_lit = graph.get_Abiclique_vertice_id(b, u,literalsbefore_A)
+                for v in graph.vertices:
+                    if u != v:
+                        A_v_lit = graph.get_Abiclique_vertice_id(b, v,literalsbefore_A)
+                        B_v_lit = graph.get_Bbiclique_vertice_id(b, v,literalsbefore_B)
+                        b_edge = graph.get_biclique_edge_id(b, u, v,literalsbeforeedges)
+                        cnf.append([-A_u_lit, -A_v_lit, -b_edge, 0])
+                        cnf.append([-A_u_lit, -B_v_lit, b_edge, 0])
+
         
 
         k += 1
-    # Encoding logic goes here
 
     return cnf, nr_vars
 
