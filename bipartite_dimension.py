@@ -82,7 +82,7 @@ def encode(graph, k):
         if is_edge:
             clause = []
             for b in range(1, k+1):
-                clause.append(graph.get_biclique_edge_var(b, u, v, lits_before=lits_before_edges))
+                clause.append(graph.get_biclique_edge_id(b, u, v, lits_before=lits_before_edges))
             clause.append(0)
             cnf.append(clause)
 
@@ -90,17 +90,17 @@ def encode(graph, k):
     for (is_edge, u, v) in graph.edgeliterals:
         if not is_edge:
             for b in range(1, k+1):
-                evar = graph.get_biclique_edge_var(b, u, v, lits_before=lits_before_edges)
+                evar = graph.get_biclique_edge_id(b, u, v, lits_before=lits_before_edges)
                 cnf.append([-evar, 0])
 
     # If an edge is chosen in a biclique then its vertice must be exclusively in A or B part:
     for (is_edge, u, v) in graph.edgeliterals:
         for b in range(1, k+1):
-            evar = graph.get_biclique_edge_var(b, u, v, lits_before=lits_before_edges)
-            A_u = graph.get_A_var(b, u, lits_before=lits_before_A)
-            A_v = graph.get_A_var(b, v, lits_before=lits_before_A)
-            B_u = graph.get_B_var(b, u, lits_before=lits_before_B)
-            B_v = graph.get_B_var(b, v, lits_before=lits_before_B)
+            evar = graph.get_biclique_edge_id(b, u, v, lits_before=lits_before_edges)
+            A_u = graph.get_A_vertice_id(b, u, lits_before=lits_before_A)
+            A_v = graph.get_A_vertice_id(b, v, lits_before=lits_before_A)
+            B_u = graph.get_B_vertice_id(b, u, lits_before=lits_before_B)
+            B_v = graph.get_B_vertice_id(b, v, lits_before=lits_before_B)
 
             # converted to CNF 
             cnf.append([-evar, A_u, A_v, 0])
@@ -112,23 +112,23 @@ def encode(graph, k):
     # If a vertex is in A part of a biclique then it has to have edges to all vertices in biclique's B part and none to A part:
     for u in graph.vertices:
         for b in range(1, k+1):
-            A_u = graph.get_A_var(b, u, lits_before=lits_before_A)
+            A_u = graph.get_A_vertice_id(b, u, lits_before=lits_before_A)
             for v in graph.vertices:
                 if u != v:
-                    A_v = graph.get_A_var(b, v, lits_before=lits_before_A)
-                    B_v = graph.get_B_var(b, v, lits_before=lits_before_B)
-                    b_edge = graph.get_biclique_edge_var(b, u, v, lits_before=lits_before_edges)
+                    A_v = graph.get_A_vertice_id(b, v, lits_before=lits_before_A)
+                    B_v = graph.get_B_vertice_id(b, v, lits_before=lits_before_B)
+                    b_edge = graph.get_biclique_edge_id(b, u, v, lits_before=lits_before_edges)
                     cnf.append([-A_u, -A_v, -b_edge, 0])
                     cnf.append([-A_u, -B_v, b_edge, 0])
     # If a vertex is in B part of a biclique then it has to have edges to all vertices in biclique's A part and none to B part:
     for u in graph.vertices:
         for b in range(1, k+1):
-            B_u = graph.get_B_var(b, u, lits_before=lits_before_B)
+            B_u = graph.get_B_vertice_id(b, u, lits_before=lits_before_B)
             for v in graph.vertices:
                 if u != v:
-                    A_v = graph.get_A_var(b, v, lits_before=lits_before_A)
-                    B_v = graph.get_B_var(b, v, lits_before=lits_before_B)
-                    b_edge = graph.get_biclique_edge_var(b, u, v, lits_before=lits_before_edges)
+                    A_v = graph.get_A_vertice_id(b, v, lits_before=lits_before_A)
+                    B_v = graph.get_B_vertice_id(b, v, lits_before=lits_before_B)
+                    b_edge = graph.get_biclique_edge_id(b, u, v, lits_before=lits_before_edges)
                     cnf.append([-B_u, -B_v, -b_edge, 0])
                     cnf.append([-B_u, -A_v, b_edge, 0])
 
