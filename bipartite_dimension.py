@@ -49,8 +49,8 @@ def edges_to_literals(edges): # convert adjacency matrix to edge literals list
     return edgelit
 
 
-def encode(graph,k, maximum_iterations):
-    k=1
+def encode(graph,k):
+    
     cnf = [] # list of clauses
 
     nr_vars = 0
@@ -116,6 +116,8 @@ def encode(graph,k, maximum_iterations):
             cnf.append([-biclique_edge_lit, B_u_lit, B_v_lit, 0])
             cnf.append([-biclique_edge_lit, B_v_lit, A_v_lit, 0])
             cnf.append([-biclique_edge_lit, -A_u_lit, -B_u_lit,-A_v_lit, -B_v_lit, 0])
+            #cnf.append([ -A_u_lit, -B_u_lit, 0])
+            #cnf.append([ -A_v_lit, -B_v_lit, 0])
 
     # if a vertice is in A_k then all other 
     for u in graph.vertices:
@@ -149,7 +151,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-i",
         "--input",
-        default="instances/instance2.in",
+        default="instances/instance1.in",
         type=str,
         help=(
             "The instance file."
@@ -176,11 +178,11 @@ if __name__ == "__main__":
     k = 1
     while k <= maximum_iterations or maximum_iterations == 0:
     
-        cnf, nr_vars = encode(graph,k,maximum_iterations)
+        cnf, nr_vars = encode(graph,k)
         print("Running solver for", k, "bicliques...")
         result = call_solver(cnf, nr_vars, args.output, "glucose-syrup", 1)
-        if result is not None:
-            print("Bipartite dimension is:", k)
+        if result.returncode == 10:
+            print("Bipartite dimension is", k)
             break
         k += 1
 
