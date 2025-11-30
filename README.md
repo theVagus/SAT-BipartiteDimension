@@ -167,6 +167,7 @@ see in "figure_1.png" dimension 5 was not even measurable
 
 As for each iteration in a single instance we can observe that when we arrive on iteration of the solution the iteration before has much greater duration see in "figure_2.png" where measurements were conducted on 32 - complete graph
 
+experiments were conducted on Macbook air, Apple M4 cpu, 16 gb RAM, macOS 15.7.2 
 ## Files Included
 
 -   `biclique_solver.py` --- main program
