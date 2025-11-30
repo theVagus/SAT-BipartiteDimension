@@ -36,3 +36,6 @@ pyvenv.cfg
 
 # Jupyter Notebook checkpoint
 .ipynb_checkpoints
+
+#solver
+glucose-4.2.1/
