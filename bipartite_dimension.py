@@ -22,11 +22,13 @@ class Graph:
         return (b-1) * self.numberofedgeliterals + edge_id + 1 + lits_before
     def get_Abiclique_vertice_id(self, b, v, lits_before=0):
         return (b-1) * len(self.vertices) + v + lits_before +1
-    def get_Bbiclique_vertice_id(self, b, v, lits_before=0):
+    def get_Bbiclique_vertice_id(self, b, v, lits_before=0): #same as A but is used for clarity
         return (b-1) * len(self.vertices) + v  + lits_before +1
 
     
-    
+
+
+
 def load_graph(file_path):
     edgelist = []
     with open(file_path, "r") as file:
@@ -41,7 +43,7 @@ def load_graph(file_path):
             edges[edgevertices[1]-1][edgevertices[0]-1] = True # shouldn't be necessary for undirected graph but just in case
 
     return vertices, edges, maximum_iterations
-def edges_to_literals(edges): # convert adjacency matrix to edge literals list
+def edges_to_literals(edges): # convert adjacency matrix to edge literals list 
     edgelit = []
     for i in range(len(edges)):
         for j in range(i+1, len(edges)):
@@ -51,10 +53,13 @@ def edges_to_literals(edges): # convert adjacency matrix to edge literals list
 
 def encode(graph,k):
     
+
     cnf = [] # list of clauses
 
     nr_vars = 0
     literalsbeforeedges= nr_vars
+
+
 
     # Add literals for edges present in k-biclique
     biclique_edges = []
@@ -71,6 +76,8 @@ def encode(graph,k):
             clause.append(0)
             cnf.append(clause)
 
+
+
     # if edge does not exist in graph it must not exist in any biclique?
     for i in range(len(graph.edgeliterals)):
         is_edge, u, v = graph.edgeliterals[i]
@@ -80,6 +87,8 @@ def encode(graph,k):
                 cnf.append([-biclique_edge_lit, 0])
     nr_vars += k * graph.numberofedgeliterals
     literalsbefore_A= nr_vars
+
+
 
 
     # setup a vertices in biclique A and B
@@ -99,6 +108,8 @@ def encode(graph,k):
         vertices_in_biclique_B.append(B)     
     nr_vars +=  k * len(graph.vertices)
 
+
+
     # if an edge is present in a biclique k, then u in A_k and v in B_k or v in A_k and u in B_k , NOT both
     literalsbefore_A -= 1
     literalsbefore_B -= 1 
@@ -116,8 +127,8 @@ def encode(graph,k):
             cnf.append([-biclique_edge_lit, B_u_lit, B_v_lit, 0])
             cnf.append([-biclique_edge_lit, B_v_lit, A_v_lit, 0])
             cnf.append([-biclique_edge_lit, -A_u_lit, -B_u_lit,-A_v_lit, -B_v_lit, 0])
-            #cnf.append([ -A_u_lit, -B_u_lit, 0])
-            #cnf.append([ -A_v_lit, -B_v_lit, 0])
+
+
 
     # if a vertice is in A_k then all other 
     for u in graph.vertices:
@@ -151,7 +162,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-i",
         "--input",
-        default="instances/instance1.in",
+        default="instances/instance3.in",
         type=str,
         help=(
             "The instance file."
